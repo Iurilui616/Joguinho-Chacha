@@ -1,0 +1,1735 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CHRONO-CORPO - Time Puzzle Adventure</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&family=Audiowide&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Orbitron', monospace;
+            background: #000011;
+            color: #ffffff;
+            overflow: hidden;
+            cursor: none;
+            user-select: none;
+        }
+
+        .game-container {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+            background: linear-gradient(135deg, #000011, #001122, #002244);
+        }
+
+        /* CURSOR TEMPORAL */
+        .custom-cursor {
+            position: fixed;
+            width: 25px;
+            height: 25px;
+            background: radial-gradient(circle, #00ffff, #0080ff);
+            border: 2px solid #ffffff;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 9999;
+            transition: all 0.1s ease;
+            box-shadow: 0 0 20px #00ffff;
+            animation: cursor-time 3s infinite;
+        }
+
+        @keyframes cursor-time {
+            0%, 100% { 
+                transform: scale(1) rotate(0deg); 
+                box-shadow: 0 0 20px #00ffff;
+            }
+            33% { 
+                transform: scale(1.2) rotate(120deg); 
+                box-shadow: 0 0 30px #ff0080;
+            }
+            66% { 
+                transform: scale(1.1) rotate(240deg); 
+                box-shadow: 0 0 25px #80ff00;
+            }
+        }
+
+        /* TELA DE MENU */
+        .menu-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, #000011, #001122, #002244, #003366);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .game-title {
+            font-family: 'Audiowide', cursive;
+            font-size: 4em;
+            color: #00ffff;
+            text-shadow: 
+                0 0 20px #00ffff,
+                0 0 40px #00ffff,
+                0 0 60px #0080ff;
+            margin-bottom: 20px;
+            animation: title-temporal 4s infinite;
+            letter-spacing: 5px;
+            text-align: center;
+        }
+
+        @keyframes title-temporal {
+            0%, 100% { 
+                opacity: 1; 
+                transform: scale(1);
+                color: #00ffff;
+                text-shadow: 0 0 20px #00ffff, 0 0 40px #00ffff;
+            }
+            25% { 
+                opacity: 0.9; 
+                transform: scale(1.05);
+                color: #ff0080;
+                text-shadow: 0 0 25px #ff0080, 0 0 50px #ff0080;
+            }
+            50% { 
+                opacity: 0.8; 
+                transform: scale(1.02);
+                color: #80ff00;
+                text-shadow: 0 0 30px #80ff00, 0 0 60px #80ff00;
+            }
+            75% { 
+                opacity: 0.9; 
+                transform: scale(1.08);
+                color: #ffff00;
+                text-shadow: 0 0 35px #ffff00, 0 0 70px #ffff00;
+            }
+        }
+
+        .game-subtitle {
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 1.6em;
+            color: #cccccc;
+            margin-bottom: 40px;
+            text-align: center;
+            line-height: 1.6;
+            max-width: 800px;
+            animation: subtitle-glow 6s infinite;
+            font-weight: 300;
+        }
+
+        @keyframes subtitle-glow {
+            0%, 100% { text-shadow: 0 0 10px rgba(255, 255, 255, 0.3); }
+            50% { text-shadow: 0 0 20px rgba(255, 255, 255, 0.6); }
+        }
+
+        .menu-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .menu-btn {
+            background: linear-gradient(135deg, #001122, #002244, #003366);
+            border: 3px solid #00ffff;
+            color: #ffffff;
+            padding: 15px 40px;
+            font-family: 'Orbitron', monospace;
+            font-size: 18px;
+            font-weight: 700;
+            cursor: pointer;
+            border-radius: 15px;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
+        }
+
+        .menu-btn:hover {
+            background: linear-gradient(135deg, #002244, #003366, #004488);
+            transform: translateY(-5px) scale(1.05);
+            box-shadow: 0 15px 40px rgba(0, 255, 255, 0.6);
+            border-color: #ff0080;
+        }
+
+        .menu-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .menu-btn:hover::before {
+            left: 100%;
+        }
+
+        /* INTERFACE DO JOGO */
+        .game-ui {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 100;
+        }
+
+        .time-meter {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            width: 300px;
+            height: 30px;
+            background: rgba(0, 0, 0, 0.8);
+            border: 3px solid #00ffff;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+        }
+
+        .time-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00ff00, #ffff00, #ff8000, #ff0000);
+            transition: width 0.5s ease;
+            width: 100%;
+            animation: time-pulse 2s infinite;
+        }
+
+        @keyframes time-pulse {
+            0%, 100% { box-shadow: inset 0 0 15px rgba(255, 255, 255, 0.3); }
+            50% { box-shadow: inset 0 0 30px rgba(255, 255, 255, 0.6); }
+        }
+
+        .time-label {
+            position: absolute;
+            top: -25px;
+            left: 0;
+            font-family: 'Audiowide', cursive;
+            font-size: 14px;
+            color: #00ffff;
+            text-shadow: 0 0 10px #00ffff;
+        }
+
+        .phase-indicator {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            border: 3px solid #ff0080;
+            border-radius: 15px;
+            padding: 10px 20px;
+            font-family: 'Audiowide', cursive;
+            font-size: 20px;
+            color: #ff0080;
+            text-shadow: 0 0 15px #ff0080;
+            box-shadow: 0 0 25px rgba(255, 0, 128, 0.5);
+        }
+
+        .level-info {
+            position: absolute;
+            top: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.9);
+            border: 2px solid #80ff00;
+            border-radius: 10px;
+            padding: 10px 20px;
+            font-size: 16px;
+            color: #80ff00;
+            text-align: center;
+            text-shadow: 0 0 10px #80ff00;
+        }
+
+        .moves-counter {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid #ffff00;
+            border-radius: 10px;
+            padding: 10px 15px;
+            font-size: 16px;
+            color: #ffff00;
+            text-shadow: 0 0 10px #ffff00;
+        }
+
+        /* ÁREA DO JOGO */
+        .game-area {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            background: linear-gradient(135deg, #001122, #002244);
+            overflow: hidden;
+        }
+
+        .game-grid {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: grid;
+            grid-template-columns: repeat(10, 50px);
+            grid-template-rows: repeat(8, 50px);
+            gap: 2px;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 10px;
+            border-radius: 10px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .grid-cell {
+            width: 50px;
+            height: 50px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 5px;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .grid-cell.wall {
+            background: linear-gradient(135deg, #333333, #555555);
+            border-color: #777777;
+        }
+
+        .grid-cell.floor {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .grid-cell.goal {
+            background: radial-gradient(circle, #00ff00, #008800);
+            border-color: #00ff00;
+            animation: goal-pulse 2s infinite;
+            box-shadow: 0 0 15px #00ff00;
+        }
+
+        @keyframes goal-pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        /* PERSONAGENS TEMPORAIS */
+        .character {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            z-index: 50;
+            border: 3px solid;
+            box-shadow: 0 0 20px;
+        }
+
+        .character.past {
+            background: radial-gradient(circle, #ff0080, #cc0066);
+            border-color: #ff0080;
+            color: #ffffff;
+            box-shadow: 0 0 20px #ff0080;
+            animation: character-past 3s infinite;
+        }
+
+        .character.present {
+            background: radial-gradient(circle, #00ffff, #0099cc);
+            border-color: #00ffff;
+            color: #ffffff;
+            box-shadow: 0 0 20px #00ffff;
+            animation: character-present 3s infinite;
+        }
+
+        .character.future {
+            background: radial-gradient(circle, #80ff00, #66cc00);
+            border-color: #80ff00;
+            color: #ffffff;
+            box-shadow: 0 0 20px #80ff00;
+            animation: character-future 3s infinite;
+        }
+
+        @keyframes character-past {
+            0%, 100% { transform: scale(1) rotate(0deg); }
+            50% { transform: scale(1.1) rotate(5deg); }
+        }
+
+        @keyframes character-present {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.15); }
+        }
+
+        @keyframes character-future {
+            0%, 100% { transform: scale(1) rotate(0deg); }
+            50% { transform: scale(1.1) rotate(-5deg); }
+        }
+
+        .character.active {
+            animation: character-active 1s infinite;
+            z-index: 60;
+        }
+
+        @keyframes character-active {
+            0%, 100% { transform: scale(1.2); }
+            50% { transform: scale(1.4); }
+        }
+
+        .character.ghost {
+            opacity: 0.6;
+            animation: character-ghost 2s infinite;
+        }
+
+        @keyframes character-ghost {
+            0%, 100% { opacity: 0.6; }
+            50% { opacity: 0.3; }
+        }
+
+        /* ELEMENTOS INTERATIVOS */
+        .interactive-element {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            z-index: 30;
+        }
+
+        .button {
+            background: linear-gradient(135deg, #ff8800, #cc6600);
+            border: 2px solid #ff8800;
+            color: #ffffff;
+            cursor: pointer;
+            animation: button-idle 3s infinite;
+        }
+
+        .button.pressed {
+            background: linear-gradient(135deg, #00ff00, #00cc00);
+            border-color: #00ff00;
+            animation: button-pressed 1s infinite;
+        }
+
+        @keyframes button-idle {
+            0%, 100% { box-shadow: 0 0 10px #ff8800; }
+            50% { box-shadow: 0 0 20px #ff8800; }
+        }
+
+        @keyframes button-pressed {
+            0%, 100% { box-shadow: 0 0 15px #00ff00; }
+            50% { box-shadow: 0 0 30px #00ff00; }
+        }
+
+        .door {
+            background: linear-gradient(135deg, #8800ff, #6600cc);
+            border: 2px solid #8800ff;
+            color: #ffffff;
+            animation: door-closed 3s infinite;
+        }
+
+        .door.open {
+            background: linear-gradient(135deg, #00ffff, #00cccc);
+            border-color: #00ffff;
+            animation: door-open 2s infinite;
+        }
+
+        @keyframes door-closed {
+            0%, 100% { box-shadow: 0 0 10px #8800ff; }
+            50% { box-shadow: 0 0 20px #8800ff; }
+        }
+
+        @keyframes door-open {
+            0%, 100% { box-shadow: 0 0 15px #00ffff; }
+            50% { box-shadow: 0 0 30px #00ffff; }
+        }
+
+        .key {
+            background: radial-gradient(circle, #ffff00, #cccc00);
+            border: 2px solid #ffff00;
+            color: #000000;
+            animation: key-glow 2s infinite;
+        }
+
+        .key.collected {
+            opacity: 0.3;
+            animation: none;
+        }
+
+        @keyframes key-glow {
+            0%, 100% { 
+                box-shadow: 0 0 15px #ffff00;
+                transform: scale(1);
+            }
+            50% { 
+                box-shadow: 0 0 30px #ffff00;
+                transform: scale(1.2);
+            }
+        }
+
+        .pressure-plate {
+            background: linear-gradient(135deg, #666666, #444444);
+            border: 2px solid #888888;
+            color: #ffffff;
+            border-radius: 50%;
+        }
+
+        .pressure-plate.activated {
+            background: linear-gradient(135deg, #00ff00, #00cc00);
+            border-color: #00ff00;
+            animation: plate-activated 1s infinite;
+        }
+
+        @keyframes plate-activated {
+            0%, 100% { box-shadow: 0 0 10px #00ff00; }
+            50% { box-shadow: 0 0 20px #00ff00; }
+        }
+
+        /* EFEITOS TEMPORAIS */
+        .time-trail {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 25;
+            animation: trail-fade 1s ease-out forwards;
+        }
+
+        @keyframes trail-fade {
+            0% { opacity: 0.8; transform: scale(1); }
+            100% { opacity: 0; transform: scale(0.5); }
+        }
+
+        .temporal-effect {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(0, 255, 255, 0.1), transparent);
+            pointer-events: none;
+            z-index: 75;
+            animation: temporal-wave 2s ease-out;
+        }
+
+        @keyframes temporal-wave {
+            0% { opacity: 0; transform: scale(0); }
+            50% { opacity: 1; transform: scale(1); }
+            100% { opacity: 0; transform: scale(1.5); }
+        }
+
+        .phase-transition {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, 
+                rgba(255, 0, 128, 0.3), 
+                rgba(0, 255, 255, 0.3), 
+                rgba(128, 255, 0, 0.3));
+            pointer-events: none;
+            z-index: 200;
+            animation: phase-change 1.5s ease-out;
+        }
+
+        @keyframes phase-change {
+            0% { opacity: 0; transform: scale(0) rotate(0deg); }
+            50% { opacity: 1; transform: scale(1) rotate(180deg); }
+            100% { opacity: 0; transform: scale(1.2) rotate(360deg); }
+        }
+
+        /* DIÁLOGOS E MENSAGENS */
+        .dialogue-box {
+            position: absolute;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.95);
+            border: 3px solid #00ffff;
+            border-radius: 20px;
+            padding: 20px 30px;
+            max-width: 80%;
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 18px;
+            color: #ffffff;
+            text-align: center;
+            z-index: 300;
+            animation: dialogue-appear 0.5s ease;
+            line-height: 1.4;
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.5);
+        }
+
+        @keyframes dialogue-appear {
+            from { 
+                transform: translateX(-50%) translateY(30px) scale(0.9); 
+                opacity: 0; 
+            }
+            to { 
+                transform: translateX(-50%) translateY(0) scale(1); 
+                opacity: 1; 
+            }
+        }
+
+        .dialogue-speaker {
+            font-family: 'Audiowide', cursive;
+            font-size: 16px;
+            color: #00ffff;
+            margin-bottom: 10px;
+            text-shadow: 0 0 10px #00ffff;
+        }
+
+        /* CONTROLES */
+        .controls-hint {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid #ffffff;
+            border-radius: 10px;
+            padding: 10px 20px;
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 14px;
+            color: #ffffff;
+            text-align: center;
+            animation: controls-glow 4s infinite;
+        }
+
+        @keyframes controls-glow {
+            0%, 100% { border-color: #ffffff; }
+            50% { border-color: #00ffff; }
+        }
+
+        /* TELAS DE RESULTADO */
+        .result-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.98);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            z-index: 500;
+        }
+
+        .result-title {
+            font-family: 'Audiowide', cursive;
+            font-size: 3em;
+            margin-bottom: 30px;
+            text-shadow: 0 0 30px;
+            animation: result-glow 2s infinite;
+            text-align: center;
+        }
+
+        .result-title.success {
+            color: #00ff00;
+            text-shadow: 0 0 30px #00ff00;
+        }
+
+        .result-title.failure {
+            color: #ff0000;
+            text-shadow: 0 0 30px #ff0000;
+        }
+
+        .result-title.temporal {
+            color: #00ffff;
+            text-shadow: 0 0 30px #00ffff;
+        }
+
+        @keyframes result-glow {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.05); opacity: 0.9; }
+        }
+
+        .result-text {
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 1.4em;
+            color: #cccccc;
+            text-align: center;
+            margin-bottom: 40px;
+            line-height: 1.6;
+            max-width: 80%;
+            font-weight: 300;
+        }
+
+        /* RESPONSIVO */
+        @media (max-width: 768px) {
+            .game-title {
+                font-size: 2.5em;
+            }
+            
+            .menu-btn {
+                font-size: 16px;
+                padding: 12px 30px;
+            }
+            
+            .game-grid {
+                grid-template-columns: repeat(8, 40px);
+                grid-template-rows: repeat(6, 40px);
+            }
+            
+            .grid-cell {
+                width: 40px;
+                height: 40px;
+            }
+            
+            .character {
+                width: 32px;
+                height: 32px;
+                font-size: 16px;
+            }
+            
+            .interactive-element {
+                width: 32px;
+                height: 32px;
+                font-size: 20px;
+            }
+        }
+
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="custom-cursor" id="cursor"></div>
+
+        <!-- MENU PRINCIPAL -->
+        <div class="menu-screen" id="mainMenu">
+            <div class="game-title">CHRONO-CORPO</div>
+            <div class="game-subtitle">
+                Controle três versões de si mesmo através do tempo...<br>
+                Passado, Presente e Futuro devem trabalhar juntos...<br>
+                Sincronize ações para resolver quebra-cabeças temporais...<br>
+                O tempo é seu recurso mais valioso...
+            </div>
+            <div class="menu-buttons">
+                <button class="menu-btn" onclick="game.startGame()">⏳ INICIAR VIAGEM TEMPORAL</button>
+                <button class="menu-btn" onclick="game.showStory()">📚 TEORIA DO TEMPO</button>
+                <button class="menu-btn" onclick="game.showInstructions()">🎮 COMO CONTROLAR O TEMPO</button>
+            </div>
+        </div>
+
+        <!-- INTERFACE DO JOGO -->
+        <div class="game-ui" id="gameUI">
+            <div class="time-meter">
+                <div class="time-label">ENERGIA TEMPORAL</div>
+                <div class="time-fill" id="timeFill"></div>
+            </div>
+            <div class="phase-indicator" id="phaseIndicator">FASE: PASSADO</div>
+            <div class="level-info" id="levelInfo">NÍVEL 1: SINCRONIZAÇÃO BÁSICA</div>
+            <div class="moves-counter" id="movesCounter">MOVIMENTOS: 0</div>
+        </div>
+
+        <!-- ÁREA DO JOGO -->
+        <div class="game-area" id="gameArea">
+            <div class="game-grid" id="gameGrid">
+                <!-- Grid será gerado dinamicamente -->
+            </div>
+        </div>
+
+        <!-- DIÁLOGO -->
+        <div class="dialogue-box hidden" id="dialogueBox">
+            <div class="dialogue-speaker" id="dialogueSpeaker">SISTEMA TEMPORAL</div>
+            <div id="dialogueText">Bem-vindo ao laboratório temporal. Prepare-se para controlar o tempo...</div>
+        </div>
+
+        <!-- CONTROLES -->
+        <div class="controls-hint" id="controlsHint">
+            Use WASD ou SETAS para mover • ESPAÇO para próxima fase • R para reiniciar
+        </div>
+
+        <!-- TELA DE SUCESSO -->
+        <div class="result-screen" id="successScreen">
+            <div class="result-title success">SINCRONIZAÇÃO PERFEITA</div>
+            <div class="result-text" id="successText">
+                Você conseguiu sincronizar todas as versões temporais!<br>
+                Passado, Presente e Futuro trabalharam em harmonia.<br>
+                O quebra-cabeça temporal foi resolvido com maestria.<br><br>
+                Prepare-se para desafios ainda maiores...
+            </div>
+            <button class="menu-btn" onclick="game.nextLevel()">PRÓXIMO NÍVEL</button>
+            <button class="menu-btn" onclick="game.backToMenu()">MENU PRINCIPAL</button>
+        </div>
+
+        <!-- TELA DE FALHA -->
+        <div class="result-screen" id="failureScreen">
+            <div class="result-title failure">PARADOXO TEMPORAL</div>
+            <div class="result-text" id="failureText">
+                A linha temporal entrou em colapso...<br>
+                As versões de si mesmo não conseguiram se sincronizar.<br>
+                O tempo se fragmentou em pedaços irreparáveis.<br><br>
+                Tente novamente para restaurar a continuidade temporal.
+            </div>
+            <button class="menu-btn" onclick="game.restartLevel()">TENTAR NOVAMENTE</button>
+            <button class="menu-btn" onclick="game.backToMenu()">DESISTIR</button>
+        </div>
+
+        <!-- TELA DE TRANSIÇÃO -->
+        <div class="result-screen" id="transitionScreen">
+            <div class="result-title temporal">MUDANÇA TEMPORAL</div>
+            <div class="result-text" id="transitionText">
+                Preparando próxima fase temporal...<br>
+                Suas ações anteriores estão sendo gravadas...<br>
+                A próxima versão de si mesmo está assumindo o controle...
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class ChronoCorpo {
+            constructor() {
+                // 🎮 ESTADO DO JOGO
+                this.gameState = 'menu'; // menu, playing, transition, success, failure
+                this.currentLevel = 1;
+                this.maxLevels = 5;
+                this.currentPhase = 'past'; // past, present, future
+                this.phases = ['past', 'present', 'future'];
+                this.phaseIndex = 0;
+                
+                // ⏰ SISTEMA DE TEMPO
+                this.timeEnergy = 100;
+                this.maxTimeEnergy = 100;
+                this.timeDecayRate = 0.5; // Por segundo
+                
+                // 🎯 MOVIMENTO E POSIÇÃO
+                this.gridWidth = 10;
+                this.gridHeight = 8;
+                this.cellSize = 50;
+                this.moveCount = 0;
+                
+                // 👤 PERSONAGENS TEMPORAIS
+                this.characters = {
+                    past: { x: 1, y: 1, active: false, moves: [], currentMove: 0 },
+                    present: { x: 1, y: 1, active: false, moves: [], currentMove: 0 },
+                    future: { x: 1, y: 1, active: false, moves: [], currentMove: 0 }
+                };
+                
+                // 🗺️ MAPA DO NÍVEL
+                this.currentMap = [];
+                this.interactiveElements = [];
+                this.levelGoals = [];
+                
+                // 📚 DEFINIÇÕES DOS NÍVEIS
+                this.levels = {
+                    1: {
+                        name: "SINCRONIZAÇÃO BÁSICA",
+                        description: "Aprenda a controlar suas versões temporais",
+                        map: this.createLevel1(),
+                        goals: [{ x: 8, y: 6, type: 'goal' }],
+                        elements: [
+                            { x: 4, y: 3, type: 'button', id: 'btn1', state: false },
+                            { x: 6, y: 5, type: 'door', id: 'door1', state: false, linkedTo: 'btn1' }
+                        ]
+                    },
+                    2: {
+                        name: "COOPERAÇÃO TEMPORAL",
+                        description: "Duas versões devem trabalhar juntas",
+                        map: this.createLevel2(),
+                        goals: [{ x: 8, y: 6, type: 'goal' }],
+                        elements: [
+                            { x: 2, y: 4, type: 'button', id: 'btn1', state: false },
+                            { x: 6, y: 2, type: 'button', id: 'btn2', state: false },
+                            { x: 7, y: 5, type: 'door', id: 'door1', state: false, linkedTo: ['btn1', 'btn2'] },
+                            { x: 3, y: 6, type: 'key', id: 'key1', collected: false },
+                            { x: 5, y: 1, type: 'pressure-plate', id: 'plate1', state: false }
+                        ]
+                    },
+                    3: {
+                        name: "PARADOXO TRIPLO",
+                        description: "Todas as três versões devem se coordenar",
+                        map: this.createLevel3(),
+                        goals: [{ x: 8, y: 6, type: 'goal' }],
+                        elements: [
+                            { x: 1, y: 3, type: 'button', id: 'btn1', state: false },
+                            { x: 4, y: 1, type: 'button', id: 'btn2', state: false },
+                            { x: 7, y: 3, type: 'button', id: 'btn3', state: false },
+                            { x: 5, y: 5, type: 'door', id: 'door1', state: false, linkedTo: ['btn1', 'btn2', 'btn3'] },
+                            { x: 2, y: 6, type: 'pressure-plate', id: 'plate1', state: false },
+                            { x: 6, y: 6, type: 'pressure-plate', id: 'plate2', state: false },
+                            { x: 8, y: 2, type: 'key', id: 'key1', collected: false }
+                        ]
+                    }
+                };
+                
+                // ⚡ CONTROLES
+                this.keys = {};
+                this.mouse = { x: 0, y: 0 };
+                
+                // 🎯 TIMERS
+                this.timeTimer = null;
+                this.moveTimer = null;
+                
+                this.init();
+            }
+            
+            // 🚀 INICIALIZAÇÃO
+            init() {
+                console.log("⏳ Initializing CHRONO-CORPO...");
+                this.setupEventListeners();
+                this.updateCursor();
+                this.loadGameData();
+            }
+            
+            // 💾 CARREGAR DADOS DO JOGO
+            loadGameData() {
+                const savedData = localStorage.getItem('chronoCorpo');
+                if (savedData) {
+                    const data = JSON.parse(savedData);
+                    this.currentLevel = data.currentLevel || 1;
+                    console.log("📁 Loaded game data:", data);
+                }
+            }
+            
+            // 💾 SALVAR DADOS DO JOGO
+            saveGameData() {
+                const data = {
+                    currentLevel: this.currentLevel,
+                    timestamp: Date.now()
+                };
+                localStorage.setItem('chronoCorpo', JSON.stringify(data));
+                console.log("💾 Saved game data:", data);
+            }
+            
+            // 🖱️ CONFIGURAR EVENTOS
+            setupEventListeners() {
+                // CURSOR PERSONALIZADO
+                document.addEventListener('mousemove', (e) => {
+                    const cursor = document.getElementById('cursor');
+                    cursor.style.left = e.clientX - 12.5 + 'px';
+                    cursor.style.top = e.clientY - 12.5 + 'px';
+                    
+                    this.mouse.x = e.clientX;
+                    this.mouse.y = e.clientY;
+                });
+                
+                // CONTROLES DE TECLADO
+                document.addEventListener('keydown', (e) => {
+                    this.keys[e.code] = true;
+                    
+                    if (this.gameState === 'playing') {
+                        this.handleKeyPress(e.code);
+                    }
+                });
+                
+                document.addEventListener('keyup', (e) => {
+                    this.keys[e.code] = false;
+                });
+            }
+            
+            // ⌨️ PROCESSAR TECLAS
+            handleKeyPress(key) {
+                const activeChar = this.characters[this.currentPhase];
+                if (!activeChar.active) return;
+                
+                let newX = activeChar.x;
+                let newY = activeChar.y;
+                let moved = false;
+                
+                switch (key) {
+                    case 'KeyW':
+                    case 'ArrowUp':
+                        newY = Math.max(0, activeChar.y - 1);
+                        moved = newY !== activeChar.y;
+                        break;
+                    case 'KeyS':
+                    case 'ArrowDown':
+                        newY = Math.min(this.gridHeight - 1, activeChar.y + 1);
+                        moved = newY !== activeChar.y;
+                        break;
+                    case 'KeyA':
+                    case 'ArrowLeft':
+                        newX = Math.max(0, activeChar.x - 1);
+                        moved = newX !== activeChar.x;
+                        break;
+                    case 'KeyD':
+                    case 'ArrowRight':
+                        newX = Math.min(this.gridWidth - 1, activeChar.x + 1);
+                        moved = newX !== activeChar.x;
+                        break;
+                    case 'Space':
+                        this.nextPhase();
+                        return;
+                    case 'KeyR':
+                        this.restartLevel();
+                        return;
+                }
+                
+                if (moved && this.canMoveTo(newX, newY)) {
+                    this.moveCharacter(activeChar, newX, newY);
+                }
+            }
+            
+            // 🚶 MOVER PERSONAGEM
+            moveCharacter(character, newX, newY) {
+                // Criar rastro temporal
+                this.createTimeTrail(character.x, character.y, this.currentPhase);
+                
+                // Atualizar posição
+                character.x = newX;
+                character.y = newY;
+                this.moveCount++;
+                
+                // Gravar movimento
+                character.moves.push({ x: newX, y: newY, timestamp: Date.now() });
+                
+                // Verificar interações
+                this.checkInteractions(newX, newY);
+                
+                // Atualizar visual
+                this.updateCharacterPosition(this.currentPhase);
+                this.updateUI();
+                
+                // Verificar vitória
+                this.checkWinCondition();
+                
+                this.playSound('move');
+            }
+            
+            // 🔍 VERIFICAR SE PODE MOVER
+            canMoveTo(x, y) {
+                // Verificar limites
+                if (x < 0 || x >= this.gridWidth || y < 0 || y >= this.gridHeight) {
+                    return false;
+                }
+                
+                // Verificar paredes
+                if (this.currentMap[y] && this.currentMap[y][x] === 1) {
+                    return false;
+                }
+                
+                // Verificar portas fechadas
+                const door = this.interactiveElements.find(el => 
+                    el.type === 'door' && el.x === x && el.y === y && !el.state
+                );
+                if (door) {
+                    return false;
+                }
+                
+                return true;
+            }
+            
+            // 🔄 VERIFICAR INTERAÇÕES
+            checkInteractions(x, y) {
+                this.interactiveElements.forEach(element => {
+                    if (element.x === x && element.y === y) {
+                        this.interactWithElement(element);
+                    }
+                });
+            }
+            
+            // 🎯 INTERAGIR COM ELEMENTO
+            interactWithElement(element) {
+                switch (element.type) {
+                    case 'button':
+                        element.state = !element.state;
+                        this.updateLinkedElements(element.id);
+                        this.addTemporalEffect();
+                        this.playSound('button');
+                        break;
+                        
+                    case 'key':
+                        if (!element.collected) {
+                            element.collected = true;
+                            this.showDialogue("Chave coletada! Use-a para abrir portas especiais.", "SISTEMA", 2000);
+                            this.playSound('collect');
+                        }
+                        break;
+                        
+                    case 'pressure-plate':
+                        element.state = true;
+                        this.updateLinkedElements(element.id);
+                        this.playSound('activate');
+                        break;
+                }
+                
+                this.updateElementVisuals();
+            }
+            
+            // 🔗 ATUALIZAR ELEMENTOS CONECTADOS
+            updateLinkedElements(elementId) {
+                this.interactiveElements.forEach(element => {
+                    if (element.linkedTo) {
+                        if (Array.isArray(element.linkedTo)) {
+                            // Múltiplas conexões - todos devem estar ativos
+                            const allActive = element.linkedTo.every(id => {
+                                const linkedEl = this.interactiveElements.find(el => el.id === id);
+                                return linkedEl && linkedEl.state;
+                            });
+                            element.state = allActive;
+                        } else if (element.linkedTo === elementId) {
+                            // Conexão simples
+                            const linkedEl = this.interactiveElements.find(el => el.id === elementId);
+                            element.state = linkedEl ? linkedEl.state : false;
+                        }
+                    }
+                });
+            }
+            
+            // ➡️ PRÓXIMA FASE
+            nextPhase() {
+                if (this.phaseIndex >= this.phases.length - 1) {
+                    this.showDialogue("Todas as fases foram completadas! Resolva o quebra-cabeça.", "SISTEMA", 3000);
+                    return;
+                }
+                
+                // Desativar fase atual
+                this.characters[this.currentPhase].active = false;
+                
+                // Próxima fase
+                this.phaseIndex++;
+                this.currentPhase = this.phases[this.phaseIndex];
+                
+                // Ativar nova fase
+                this.characters[this.currentPhase].active = true;
+                
+                // Iniciar reprodução das fases anteriores
+                this.startPreviousPhasesPlayback();
+                
+                // Efeito visual
+                this.addPhaseTransition();
+                
+                this.updateUI();
+                this.updateCharacterVisuals();
+                
+                const phaseNames = { past: 'PASSADO', present: 'PRESENTE', future: 'FUTURO' };
+                this.showDialogue(`Agora controlando: ${phaseNames[this.currentPhase]}`, "SISTEMA TEMPORAL", 2000);
+                
+                this.playSound('phase_change');
+            }
+            
+            // ▶️ INICIAR REPRODUÇÃO DAS FASES ANTERIORES
+            startPreviousPhasesPlayback() {
+                this.phases.forEach((phase, index) => {
+                    if (index < this.phaseIndex) {
+                        const character = this.characters[phase];
+                        character.currentMove = 0;
+                        this.playbackPhase(phase);
+                    }
+                });
+            }
+            
+            // 🎬 REPRODUZIR FASE
+            playbackPhase(phase) {
+                const character = this.characters[phase];
+                
+                if (character.currentMove < character.moves.length) {
+                    const move = character.moves[character.currentMove];
+                    
+                    // Criar rastro temporal
+                    this.createTimeTrail(character.x, character.y, phase);
+                    
+                    // Mover personagem
+                    character.x = move.x;
+                    character.y = move.y;
+                    character.currentMove++;
+                    
+                    // Verificar interações
+                    this.checkInteractions(move.x, move.y);
+                    
+                    // Atualizar visual
+                    this.updateCharacterPosition(phase);
+                    
+                    // Próximo movimento
+                    setTimeout(() => {
+                        this.playbackPhase(phase);
+                    }, 500); // 500ms entre movimentos
+                }
+            }
+            
+            // 🎮 INICIAR JOGO
+            startGame() {
+                console.log("⏳ Starting temporal journey...");
+                
+                this.gameState = 'playing';
+                document.getElementById('mainMenu').classList.add('hidden');
+                document.getElementById('gameUI').style.pointerEvents = 'auto';
+                
+                this.loadLevel(this.currentLevel);
+                this.startTimers();
+                
+                this.showDialogue("Bem-vindo ao laboratório temporal. Controle suas versões através do tempo!", "SISTEMA TEMPORAL", 4000);
+            }
+            
+            // 🗺️ CARREGAR NÍVEL
+            loadLevel(levelNum) {
+                const level = this.levels[levelNum];
+                if (!level) {
+                    console.error("Level not found:", levelNum);
+                    return;
+                }
+                
+                // Reset estado
+                this.currentPhase = 'past';
+                this.phaseIndex = 0;
+                this.moveCount = 0;
+                this.timeEnergy = 100;
+                
+                // Reset personagens
+                Object.keys(this.characters).forEach(phase => {
+                    this.characters[phase] = {
+                        x: 1, y: 1, active: false, moves: [], currentMove: 0
+                    };
+                });
+                
+                // Ativar primeira fase
+                this.characters[this.currentPhase].active = true;
+                
+                // Carregar dados do nível
+                this.currentMap = level.map;
+                this.interactiveElements = JSON.parse(JSON.stringify(level.elements));
+                this.levelGoals = level.goals;
+                
+                // Criar grid visual
+                this.createGameGrid();
+                this.updateUI();
+                this.updateCharacterVisuals();
+                
+                console.log("🗺️ Level loaded:", level.name);
+            }
+            
+            // 🏗️ CRIAR GRID DO JOGO
+            createGameGrid() {
+                const grid = document.getElementById('gameGrid');
+                grid.innerHTML = '';
+                
+                // Ajustar tamanho do grid
+                if (window.innerWidth <= 768) {
+                    this.gridWidth = 8;
+                    this.gridHeight = 6;
+                    this.cellSize = 40;
+                    grid.style.gridTemplateColumns = `repeat(${this.gridWidth}, 40px)`;
+                    grid.style.gridTemplateRows = `repeat(${this.gridHeight}, 40px)`;
+                }
+                
+                // Criar células
+                for (let y = 0; y < this.gridHeight; y++) {
+                    for (let x = 0; x < this.gridWidth; x++) {
+                        const cell = document.createElement('div');
+                        cell.className = 'grid-cell';
+                        cell.id = `cell-${x}-${y}`;
+                        
+                        // Definir tipo da célula
+                        if (this.currentMap[y] && this.currentMap[y][x] === 1) {
+                            cell.classList.add('wall');
+                        } else {
+                            cell.classList.add('floor');
+                        }
+                        
+                        // Verificar se é objetivo
+                        const isGoal = this.levelGoals.some(goal => goal.x === x && goal.y === y);
+                        if (isGoal) {
+                            cell.classList.add('goal');
+                        }
+                        
+                        grid.appendChild(cell);
+                    }
+                }
+                
+                // Criar personagens
+                this.createCharacters();
+                
+                // Criar elementos interativos
+                this.createInteractiveElements();
+            }
+            
+            // 👤 CRIAR PERSONAGENS
+            createCharacters() {
+                const gameArea = document.getElementById('gameArea');
+                
+                // Remover personagens existentes
+                document.querySelectorAll('.character').forEach(char => char.remove());
+                
+                // Criar novos personagens
+                Object.keys(this.characters).forEach(phase => {
+                    const character = document.createElement('div');
+                    character.className = `character ${phase}`;
+                    character.id = `character-${phase}`;
+                    
+                    // Símbolos dos personagens
+                    const symbols = { past: '⏪', present: '⏸️', future: '⏩' };
+                    character.textContent = symbols[phase];
+                    
+                    gameArea.appendChild(character);
+                });
+                
+                this.updateCharacterVisuals();
+            }
+            
+            // 🎯 CRIAR ELEMENTOS INTERATIVOS
+            createInteractiveElements() {
+                const gameArea = document.getElementById('gameArea');
+                
+                // Remover elementos existentes
+                document.querySelectorAll('.interactive-element').forEach(el => el.remove());
+                
+                // Criar novos elementos
+                this.interactiveElements.forEach(element => {
+                    const el = document.createElement('div');
+                    el.className = `interactive-element ${element.type}`;
+                    el.id = `element-${element.id}`;
+                    
+                    // Símbolos dos elementos
+                    const symbols = {
+                        button: '🔘',
+                        door: '🚪',
+                        key: '🗝️',
+                        'pressure-plate': '⚪'
+                    };
+                    el.textContent = symbols[element.type] || '❓';
+                    
+                    gameArea.appendChild(el);
+                    this.updateElementPosition(element);
+                });
+                
+                this.updateElementVisuals();
+            }
+            
+            // 📍 ATUALIZAR POSIÇÃO DO PERSONAGEM
+            updateCharacterPosition(phase) {
+                const character = document.getElementById(`character-${phase}`);
+                const char = this.characters[phase];
+                
+                if (character) {
+                    const gridRect = document.getElementById('gameGrid').getBoundingClientRect();
+                    const x = gridRect.left + (char.x * (this.cellSize + 2)) + 5;
+                    const y = gridRect.top + (char.y * (this.cellSize + 2)) + 5;
+                    
+                    character.style.left = x + 'px';
+                    character.style.top = y + 'px';
+                }
+            }
+            
+            // 📍 ATUALIZAR POSIÇÃO DO ELEMENTO
+            updateElementPosition(element) {
+                const el = document.getElementById(`element-${element.id}`);
+                
+                if (el) {
+                    const gridRect = document.getElementById('gameGrid').getBoundingClientRect();
+                    const x = gridRect.left + (element.x * (this.cellSize + 2)) + 5;
+                    const y = gridRect.top + (element.y * (this.cellSize + 2)) + 5;
+                    
+                    el.style.left = x + 'px';
+                    el.style.top = y + 'px';
+                }
+            }
+            
+            // 🎨 ATUALIZAR VISUAIS DOS PERSONAGENS
+            updateCharacterVisuals() {
+                Object.keys(this.characters).forEach(phase => {
+                    const character = document.getElementById(`character-${phase}`);
+                    const char = this.characters[phase];
+                    
+                    if (character) {
+                        // Remover classes de estado
+                        character.classList.remove('active', 'ghost');
+                        
+                        if (char.active) {
+                            character.classList.add('active');
+                        } else if (this.phaseIndex > this.phases.indexOf(phase)) {
+                            character.classList.add('ghost');
+                        }
+                        
+                        this.updateCharacterPosition(phase);
+                    }
+                });
+            }
+            
+            // 🎨 ATUALIZAR VISUAIS DOS ELEMENTOS
+            updateElementVisuals() {
+                this.interactiveElements.forEach(element => {
+                    const el = document.getElementById(`element-${element.id}`);
+                    
+                    if (el) {
+                        // Remover classes de estado
+                        el.classList.remove('pressed', 'open', 'collected', 'activated');
+                        
+                        // Adicionar classe baseada no estado
+                        if (element.state) {
+                            if (element.type === 'button') {
+                                el.classList.add('pressed');
+                            } else if (element.type === 'door') {
+                                el.classList.add('open');
+                            } else if (element.type === 'pressure-plate') {
+                                el.classList.add('activated');
+                            }
+                        }
+                        
+                        if (element.collected) {
+                            el.classList.add('collected');
+                        }
+                        
+                        this.updateElementPosition(element);
+                    }
+                });
+            }
+            
+            // ⏰ INICIAR TIMERS
+            startTimers() {
+                // Timer de energia temporal
+                this.timeTimer = setInterval(() => {
+                    if (this.gameState === 'playing') {
+                        this.timeEnergy = Math.max(0, this.timeEnergy - this.timeDecayRate);
+                        this.updateUI();
+                        
+                        if (this.timeEnergy <= 0) {
+                            this.timeUp();
+                        }
+                    }
+                }, 1000);
+            }
+            
+            // ⏹️ PARAR TIMERS
+            stopTimers() {
+                if (this.timeTimer) clearInterval(this.timeTimer);
+            }
+            
+            // ⏰ TEMPO ESGOTADO
+            timeUp() {
+                console.log("⏰ Time's up!");
+                this.gameOver("Energia temporal esgotada! O tempo se fragmentou.");
+            }
+            
+            // 🏆 VERIFICAR CONDIÇÃO DE VITÓRIA
+            checkWinCondition() {
+                // Verificar se todas as fases foram usadas
+                if (this.phaseIndex < this.phases.length - 1) {
+                    return false;
+                }
+                
+                // Verificar se pelo menos um personagem chegou ao objetivo
+                const goalReached = this.levelGoals.some(goal => {
+                    return Object.values(this.characters).some(char => 
+                        char.x === goal.x && char.y === goal.y
+                    );
+                });
+                
+                if (goalReached) {
+                    setTimeout(() => {
+                        this.levelComplete();
+                    }, 1000);
+                    return true;
+                }
+                
+                return false;
+            }
+            
+            // 🎉 NÍVEL COMPLETO
+            levelComplete() {
+                console.log("🎉 Level complete!");
+                
+                this.gameState = 'success';
+                this.stopTimers();
+                
+                document.getElementById('successScreen').style.display = 'flex';
+                this.playSound('victory');
+                
+                // Salvar progresso
+                this.saveGameData();
+            }
+            
+            // 💀 GAME OVER
+            gameOver(reason) {
+                console.log("💀 Game Over:", reason);
+                
+                this.gameState = 'failure';
+                this.stopTimers();
+                
+                document.getElementById('failureText').textContent = reason;
+                document.getElementById('failureScreen').style.display = 'flex';
+                this.playSound('failure');
+            }
+            
+            // ➡️ PRÓXIMO NÍVEL
+            nextLevel() {
+                document.getElementById('successScreen').style.display = 'none';
+                
+                this.currentLevel++;
+                
+                if (this.currentLevel > this.maxLevels) {
+                    this.showFinalVictory();
+                    return;
+                }
+                
+                this.loadLevel(this.currentLevel);
+                this.gameState = 'playing';
+                this.startTimers();
+            }
+            
+            // 🏆 VITÓRIA FINAL
+            showFinalVictory() {
+                this.showDialogue(`
+                    PARABÉNS! MESTRE DO TEMPO!
+                    
+                    Você dominou completamente o controle temporal!
+                    Suas três versões trabalharam em perfeita harmonia.
+                    O continuum espaço-tempo está seguro em suas mãos.
+                    
+                    Você é oficialmente um Guardião Temporal!
+                `, "SISTEMA TEMPORAL", 10000);
+                
+                setTimeout(() => {
+                    this.backToMenu();
+                }, 12000);
+            }
+            
+            // 🔄 REINICIAR NÍVEL
+            restartLevel() {
+                // Esconder telas de resultado
+                document.getElementById('successScreen').style.display = 'none';
+                document.getElementById('failureScreen').style.display = 'none';
+                
+                this.loadLevel(this.currentLevel);
+                this.gameState = 'playing';
+                this.startTimers();
+            }
+            
+            // 🏠 VOLTAR AO MENU
+            backToMenu() {
+                this.stopTimers();
+                this.gameState = 'menu';
+                
+                // Esconder todas as telas
+                document.getElementById('successScreen').style.display = 'none';
+                document.getElementById('failureScreen').style.display = 'none';
+                document.getElementById('transitionScreen').style.display = 'none';
+                document.getElementById('gameUI').style.pointerEvents = 'none';
+                document.getElementById('mainMenu').classList.remove('hidden');
+            }
+            
+            // 🖥️ ATUALIZAR UI
+            updateUI() {
+                // Barra de energia temporal
+                document.getElementById('timeFill').style.width = (this.timeEnergy / this.maxTimeEnergy) * 100 + '%';
+                
+                // Indicador de fase
+                const phaseNames = { past: 'PASSADO', present: 'PRESENTE', future: 'FUTURO' };
+                document.getElementById('phaseIndicator').textContent = `FASE: ${phaseNames[this.currentPhase]}`;
+                
+                // Informações do nível
+                const level = this.levels[this.currentLevel];
+                if (level) {
+                    document.getElementById('levelInfo').textContent = `NÍVEL ${this.currentLevel}: ${level.name}`;
+                }
+                
+                // Contador de movimentos
+                document.getElementById('movesCounter').textContent = `MOVIMENTOS: ${this.moveCount}`;
+                
+                // Cor da barra de energia baseada no nível
+                const timeFill = document.getElementById('timeFill');
+                if (this.timeEnergy > 70) {
+                    timeFill.style.background = 'linear-gradient(90deg, #00ff00, #80ff00)';
+                } else if (this.timeEnergy > 30) {
+                    timeFill.style.background = 'linear-gradient(90deg, #ffff00, #ff8000)';
+                } else {
+                    timeFill.style.background = 'linear-gradient(90deg, #ff8000, #ff0000)';
+                }
+            }
+            
+            // 💬 MOSTRAR DIÁLOGO
+            showDialogue(text, speaker, duration) {
+                const dialogueBox = document.getElementById('dialogueBox');
+                const speakerElement = document.getElementById('dialogueSpeaker');
+                const textElement = document.getElementById('dialogueText');
+                
+                speakerElement.textContent = speaker;
+                textElement.textContent = text;
+                
+                dialogueBox.classList.remove('hidden');
+                
+                if (duration) {
+                    setTimeout(() => {
+                        dialogueBox.classList.add('hidden');
+                    }, duration);
+                }
+            }
+            
+            // ✨ CRIAR RASTRO TEMPORAL
+            createTimeTrail(x, y, phase) {
+                const trail = document.createElement('div');
+                trail.className = 'time-trail';
+                
+                // Cores baseadas na fase
+                const colors = {
+                    past: '#ff0080',
+                    present: '#00ffff',
+                    future: '#80ff00'
+                };
+                
+                trail.style.background = colors[phase];
+                trail.style.boxShadow = `0 0 15px ${colors[phase]}`;
+                
+                // Posicionar no grid
+                const gridRect = document.getElementById('gameGrid').getBoundingClientRect();
+                const trailX = gridRect.left + (x * (this.cellSize + 2)) + 10;
+                const trailY = gridRect.top + (y * (this.cellSize + 2)) + 10;
+                
+                trail.style.left = trailX + 'px';
+                trail.style.top = trailY + 'px';
+                
+                document.body.appendChild(trail);
+                
+                // Remover após animação
+                setTimeout(() => {
+                    trail.remove();
+                }, 1000);
+            }
+            
+            // ⚡ EFEITO TEMPORAL
+            addTemporalEffect() {
+                const effect = document.createElement('div');
+                effect.className = 'temporal-effect';
+                document.body.appendChild(effect);
+                
+                setTimeout(() => {
+                    effect.remove();
+                }, 2000);
+            }
+            
+            // 🌀 TRANSIÇÃO DE FASE
+            addPhaseTransition() {
+                const transition = document.createElement('div');
+                transition.className = 'phase-transition';
+                document.body.appendChild(transition);
+                
+                setTimeout(() => {
+                    transition.remove();
+                }, 1500);
+            }
+            
+            // 🖱️ ATUALIZAR CURSOR
+            updateCursor() {
+                const cursor = document.getElementById('cursor');
+                
+                if (this.gameState === 'playing') {
+                    cursor.style.background = 'radial-gradient(circle, #00ffff, #0080ff)';
+                } else {
+                    cursor.style.background = 'radial-gradient(circle, #ffffff, #cccccc)';
+                }
+            }
+            
+            // 🔊 SONS (PLACEHOLDER)
+            playSound(type) {
+                console.log(`🔊 Playing sound: ${type}`);
+                // Aqui você adicionaria sons reais
+            }
+            
+            // 📖 MOSTRAR HISTÓRIA
+            showStory() {
+                this.showDialogue(`
+                    TEORIA DO TEMPO - CHRONO-CORPO
+                    
+                    No ano 2157, cientistas descobriram como fragmentar a consciência através do tempo.
+                    
+                    O projeto CHRONO-CORPO permite que uma pessoa controle três versões de si mesma:
+                    • PASSADO (⏪) - Suas ações anteriores
+                    • PRESENTE (⏸️) - Sua consciência atual  
+                    • FUTURO (⏩) - Suas possibilidades futuras
+                    
+                    Cada versão pode interagir com o ambiente e entre si.
+                    
+                    Mas cuidado: paradoxos temporais podem fragmentar sua existência!
+                    
+                    Use essa tecnologia para resolver quebra-cabeças impossíveis.
+                `, "ARQUIVO CIENTÍFICO", 15000);
+            }
+            
+            // 🎮 MOSTRAR INSTRUÇÕES
+            showInstructions() {
+                this.showDialogue(`
+                    COMO CONTROLAR O TEMPO:
+                    
+                    🎯 MOVIMENTO:
+                    • WASD ou SETAS para mover a versão ativa
+                    • Cada movimento é gravado automaticamente
+                    
+                    ⏰ FASES TEMPORAIS:
+                    • ESPAÇO para avançar para próxima fase
+                    • Versões anteriores repetem seus movimentos
+                    • Coordene todas as três versões
+                    
+                    🔧 ELEMENTOS:
+                    🔘 Botões - Ativam portas e mecanismos
+                    🚪 Portas - Abrem quando botões são pressionados
+                    🗝️ Chaves - Colete para abrir portas especiais
+                    ⚪ Placas de Pressão - Devem ser pisadas
+                    
+                    💡 DICAS:
+                    • Planeje seus movimentos com antecedência
+                    • Use versões diferentes para tarefas simultâneas
+                    • R para reiniciar se criar um paradoxo
+                `, "MANUAL TEMPORAL", 12000);
+            }
+            
+            // 🗺️ CRIAR MAPAS DOS NÍVEIS
+            createLevel1() {
+                return [
+                    [1,1,1,1,1,1,1,1,1,1],
+                    [1,0,0,0,0,0,0,0,0,1],
+                    [1,0,1,1,0,1,1,0,0,1],
+                    [1,0,1,0,0,0,1,0,0,1],
+                    [1,0,0,0,1,0,0,0,0,1],
+                    [1,0,1,0,0,0,1,0,0,1],
+                    [1,0,0,0,0,0,0,0,0,1],
+                    [1,1,1,1,1,1,1,1,1,1]
+                ];
+            }
+            
+            createLevel2() {
+                return [
+                    [1,1,1,1,1,1,1,1,1,1],
+                    [1,0,0,0,0,0,0,0,0,1],
+                    [1,0,1,0,0,0,1,0,0,1],
+                    [1,0,0,0,1,1,0,0,0,1],
+                    [1,0,0,0,1,1,0,0,0,1],
+                    [1,0,1,0,0,0,1,0,0,1],
+                    [1,0,0,0,0,0,0,0,0,1],
+                    [1,1,1,1,1,1,1,1,1,1]
+                ];
+            }
+            
+            createLevel3() {
+                return [
+                    [1,1,1,1,1,1,1,1,1,1],
+                    [1,0,0,0,0,0,0,0,0,1],
+                    [1,0,1,1,0,0,1,1,0,1],
+                    [1,0,0,0,0,0,0,0,0,1],
+                    [1,0,0,1,1,1,1,0,0,1],
+                    [1,0,0,0,0,0,0,0,0,1],
+                    [1,0,0,0,0,0,0,0,0,1],
+                    [1,1,1,1,1,1,1,1,1,1]
+                ];
+            }
+        }
+        
+        // 🚀 INICIALIZAÇÃO GLOBAL
+        let game;
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log("⏳ Starting CHRONO-CORPO...");
+            game = new ChronoCorpo();
+        });
+    </script>
+</body>
+</html>
